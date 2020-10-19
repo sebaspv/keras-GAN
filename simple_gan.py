@@ -3,9 +3,10 @@
 import sys
 sys.path.append('/home/mccolgan/PyCharm Projects/keras')
 from keras.models import Sequential
-from keras.layers.core import Dense,Dropout
+from keras.layers.core import Dense,Dropout,BatchNormalization
 from keras.optimizers import SGD
 from keras.initializations import normal
+from keras.layers import LeakyReLU
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.stats import gaussian_kde
@@ -31,9 +32,13 @@ print data.shape
 
 print "Setting up decoder"
 decoder = Sequential()
-decoder.add(Dense(2048, input_dim=32768, activation='relu'))
+decoder.add(Dense(2048, input_dim=batch_size*2))
+decoder.add(LeakyReLU(alpha=0.1))
+decoder.add(BatchNormalization())
 decoder.add(Dropout(0.5))
-decoder.add(Dense(1024, activation='relu'))
+decoder.add(Dense(1024))
+decoder.add(LeakyReLU(alpha=0.1))
+decoder.add(BatchNormalization())
 decoder.add(Dropout(0.5))
 decoder.add(Dense(1, activation='sigmoid'))
 
@@ -43,8 +48,10 @@ decoder.compile(loss='binary_crossentropy', optimizer=sgd)
 print "Setting up generator"
 generator = Sequential()
 generator.add(Dense(2048*2, input_dim=2048, activation='relu'))
+generator.add(BatchNormalization())
 generator.add(Dense(1024*8, activation='relu'))
-generator.add(Dense(32768, activation='linear'))
+generator.add(BatchNormalization())
+generator.add(Dense(batch_size*2, activation='linear'))
 
 generator.compile(loss='binary_crossentropy', optimizer=sgd)
 
